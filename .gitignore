@@ -9,6 +9,8 @@ obj/
 demo-output/
 batch-output/
 *.pdf
+# Exception: keep the template PDF
+!templates/*.pdf
 
 # User-specific files
 *.user

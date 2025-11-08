@@ -1,22 +1,21 @@
 # Beer Label App
 
-A simple C# console application for generating printable beer labels as PDF files. This application allows you to create professional-looking beer labels with brewery information, beer styles, ABV, IBU, descriptions, and more. The fields Style, Packaged, and Notes can be highlighted for easy editing in PDF editors.
+A simple C# console application for generating printable beer labels by filling in a PDF template. This application uses the provided beer label template and overlays your custom data (beer name, brewery, style, ABV, IBU, packaged date, and notes) to create professional-looking printable labels.
 
 ## Features
 
-- Generate printable PDF beer labels with bordered template design
+- Uses a provided PDF template for consistent label design
+- Fills in label data by overlaying text on the template
 - Customizable label fields including:
   - Beer Name
   - Brewery
-  - Style (can be highlighted as editable)
+  - Style (user-editable field)
   - ABV (Alcohol by Volume)
   - IBU (International Bitterness Units)
-  - Packaged Date (can be highlighted as editable)
-  - Notes (can be highlighted as editable)
+  - Packaged Date (user-editable field)
+  - Notes (user-editable field)
   - Brew Date
-- Generate single labels or batch process multiple labels
-- Optional highlighting of editable fields (Style, Packaged, Notes) for easy identification in PDF editors
-- Clean, professional PDF output with bordered table layout
+- Generate single labels or batch process multiple labels from JSON
 - Cross-platform (Windows, macOS, Linux)
 
 ## Requirements
@@ -35,6 +34,10 @@ A simple C# console application for generating printable beer labels as PDF file
    ```bash
    dotnet build
    ```
+
+## Template
+
+The application uses a PDF template file located in the `templates/` directory. The template (`beer-label-template.pdf`) provides the base design and layout for the beer labels. The application fills in the blank fields with your data.
 
 ## Usage
 
@@ -57,17 +60,12 @@ This will create a `demo-output` directory with three sample PDF labels:
 To generate a custom beer label:
 
 ```bash
-dotnet run -- generate <output-path> [beer-name] [brewery] [style] [abv] [ibu] [packaged] [notes] [--editable]
+dotnet run -- generate <output-path> [beer-name] [brewery] [style] [abv] [ibu] [packaged] [notes]
 ```
 
 **Example:**
 ```bash
 dotnet run -- generate my-beer.pdf "West Coast IPA" "Hop Paradise Brewery" "IPA" "7.2%" "72" "2024-11-08" "An aggressively hopped IPA with tropical fruit flavors"
-```
-
-**With editable fields highlighted:**
-```bash
-dotnet run -- generate my-beer.pdf "West Coast IPA" "Hop Paradise Brewery" "IPA" "7.2%" "72" "2024-11-08" "An aggressively hopped IPA" --editable
 ```
 
 **Parameters:**
@@ -79,24 +77,18 @@ dotnet run -- generate my-beer.pdf "West Coast IPA" "Hop Paradise Brewery" "IPA"
 - `ibu`: International Bitterness Units (optional, default: "45")
 - `packaged`: Packaging date (optional, default: current date)
 - `notes`: Beer notes/description (optional, default: "A delicious craft beer")
-- `--editable`: Highlights the Style, Packaged, and Notes fields in yellow for easy identification when editing in a PDF editor
 
 ### Batch Processing from JSON
 
 You can generate multiple labels at once by providing a JSON file with beer data:
 
 ```bash
-dotnet run -- batch <json-file> <output-directory> [--editable]
+dotnet run -- batch <json-file> <output-directory>
 ```
 
 **Example:**
 ```bash
 dotnet run -- batch ../examples/sample-beers.json batch-output/
-```
-
-**With editable fields:**
-```bash
-dotnet run -- batch ../examples/sample-beers.json batch-output/ --editable
 ```
 
 **JSON Format:**
@@ -142,6 +134,8 @@ beer-label-app/
 │   ├── LabelData.cs             # Data model for beer labels
 │   ├── PdfLabelGenerator.cs     # PDF generation logic
 │   └── BeerLabelGenerator.csproj
+├── templates/                    # PDF template files
+│   └── beer-label-template.pdf  # Base template for labels
 ├── examples/                     # Example files
 │   ├── sample-beers.json         # Sample JSON with 3 beers
 │   └── README.md                 # Examples documentation
@@ -153,21 +147,21 @@ beer-label-app/
 
 - **Language**: C# 12
 - **Framework**: .NET 9.0
-- **PDF Library**: QuestPDF 2024.10.3 (Community License)
+- **PDF Library**: PDFsharp 6.2.0 (MIT License)
 - **JSON**: System.Text.Json 9.0.10
 
-## Editable Fields
+## User-Editable Fields
 
-When you use the `--editable` flag, the following fields are highlighted in yellow with blue text:
+The following fields are designated as user-editable in the template:
 - **Style**: The beer style
 - **Packaged**: The packaging date
-- **Notes**: The beer description/notes
+- **Notes**: The beer description and tasting notes
 
-These highlighted fields make it easy to identify which content can be modified in a PDF editor after generation.
+These fields can be filled in with your data through the command-line interface or JSON file.
 
 ## License
 
-This project is open source and uses the QuestPDF Community License for non-commercial use.
+This project is open source and uses the PDFsharp MIT License.
 
 ## Contributing
 
@@ -182,13 +176,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 dotnet run -- generate american-ipa.pdf "American IPA" "My Home Brewery" "IPA" "6.8%" "65" "2024-11-08" "Classic American IPA with Cascade hops"
 dotnet run -- generate irish-stout.pdf "Irish Dry Stout" "My Home Brewery" "Stout" "4.2%" "35" "2024-11-08" "Smooth and creamy Irish-style stout"
 dotnet run -- generate wheat-beer.pdf "Hefeweizen" "My Home Brewery" "Wheat Beer" "5.4%" "12" "2024-11-08" "Traditional German wheat beer with banana and clove notes"
-```
-
-### Creating Editable Templates
-
-```bash
-# Create a template with highlighted editable fields that you can customize later
-dotnet run -- generate template.pdf "Beer Name Here" "Your Brewery" "Style Here" "0.0%" "0" "YYYY-MM-DD" "Add your tasting notes here" --editable
 ```
 
 ## Support

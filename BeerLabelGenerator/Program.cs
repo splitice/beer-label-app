@@ -44,19 +44,18 @@ static void ShowUsage()
 {
     Console.WriteLine("Usage:");
     Console.WriteLine("  BeerLabelGenerator generate <output-path> [options]");
-    Console.WriteLine("    Generates a label with provided data");
+    Console.WriteLine("    Generates a label with provided data using the PDF template");
     Console.WriteLine("    Options: [beer-name] [brewery] [style] [abv] [ibu] [packaged] [notes]");
-    Console.WriteLine("    Add --editable flag to make Style, Packaged, and Notes fields editable");
     Console.WriteLine();
-    Console.WriteLine("  BeerLabelGenerator batch <json-file> <output-directory> [--editable]");
+    Console.WriteLine("  BeerLabelGenerator batch <json-file> <output-directory>");
     Console.WriteLine("    Generates labels from a JSON file containing multiple beer entries");
     Console.WriteLine();
-    Console.WriteLine("  BeerLabelGenerator demo [--editable]");
+    Console.WriteLine("  BeerLabelGenerator demo");
     Console.WriteLine("    Runs a demo that creates sample labels");
     Console.WriteLine();
     Console.WriteLine("Examples:");
-    Console.WriteLine("  BeerLabelGenerator generate output.pdf \"IPA\" \"My Brewery\" --editable");
-    Console.WriteLine("  BeerLabelGenerator batch beers.json output/ --editable");
+    Console.WriteLine("  BeerLabelGenerator generate output.pdf \"IPA\" \"My Brewery\"");
+    Console.WriteLine("  BeerLabelGenerator batch beers.json output/");
     Console.WriteLine("  BeerLabelGenerator demo");
 }
 
@@ -70,22 +69,21 @@ static void GenerateSingleLabel(string[] args)
     }
 
     var outputPath = args[1];
-    var makeEditable = args.Contains("--editable");
 
     var labelData = new LabelData
     {
-        BeerName = args.Length > 2 && args[2] != "--editable" ? args[2] : "Sample Beer",
-        Brewery = args.Length > 3 && args[3] != "--editable" ? args[3] : "Sample Brewery",
-        Style = args.Length > 4 && args[4] != "--editable" ? args[4] : "IPA",
-        ABV = args.Length > 5 && args[5] != "--editable" ? args[5] : "6.5%",
-        IBU = args.Length > 6 && args[6] != "--editable" ? args[6] : "45",
-        Packaged = args.Length > 7 && args[7] != "--editable" ? args[7] : DateTime.Now.ToString("yyyy-MM-dd"),
-        Notes = args.Length > 8 && args[8] != "--editable" ? args[8] : "A delicious craft beer",
+        BeerName = args.Length > 2 ? args[2] : "Sample Beer",
+        Brewery = args.Length > 3 ? args[3] : "Sample Brewery",
+        Style = args.Length > 4 ? args[4] : "IPA",
+        ABV = args.Length > 5 ? args[5] : "6.5%",
+        IBU = args.Length > 6 ? args[6] : "45",
+        Packaged = args.Length > 7 ? args[7] : DateTime.Now.ToString("yyyy-MM-dd"),
+        Notes = args.Length > 8 ? args[8] : "A delicious craft beer",
         BrewDate = DateTime.Now.ToString("yyyy-MM-dd")
     };
 
     var generator = new PdfLabelGenerator();
-    generator.GenerateLabel(labelData, outputPath, makeEditable);
+    generator.GenerateLabel(labelData, outputPath);
 }
 
 static void GenerateBatchFromJson(string[] args)
@@ -93,13 +91,12 @@ static void GenerateBatchFromJson(string[] args)
     if (args.Length < 3)
     {
         Console.WriteLine("Error: JSON file path and output directory required");
-        Console.WriteLine("Usage: BeerLabelGenerator batch <json-file> <output-directory> [--editable]");
+        Console.WriteLine("Usage: BeerLabelGenerator batch <json-file> <output-directory>");
         return;
     }
 
     var jsonPath = args[1];
     var outputDir = args[2];
-    var makeEditable = args.Contains("--editable");
 
     if (!File.Exists(jsonPath))
     {
@@ -118,7 +115,7 @@ static void GenerateBatchFromJson(string[] args)
 
     Console.WriteLine($"Found {labels.Length} beer(s) in JSON file");
     var generator = new PdfLabelGenerator();
-    generator.GenerateLabels(labels, outputDir, makeEditable);
+    generator.GenerateLabels(labels, outputDir);
 }
 
 static void RunDemo()
@@ -171,7 +168,7 @@ static void RunDemo()
 
     Console.WriteLine("Generating sample labels...");
     var generator = new PdfLabelGenerator();
-    generator.GenerateLabels(sampleLabels, outputDir, false);
+    generator.GenerateLabels(sampleLabels, outputDir);
 
     Console.WriteLine($"\nDemo complete! Check the '{outputDir}' directory for:");
     Console.WriteLine($"  - Hoppy_IPA.pdf");
