@@ -1,21 +1,15 @@
 # Beer Label App
 
-A simple C# console application for generating printable beer labels by filling in a PDF template. This application uses the provided beer label template and overlays your custom data (beer name, brewery, style, ABV, IBU, packaged date, and notes) to create professional-looking printable labels.
+A simple C# console application for generating printable beer labels by filling in a PDF template. The template is a standard label sheet with a 3x6 grid layout (18 labels per page on A4), with fields for Style, Packaged date, and Notes.
 
 ## Features
 
-- Uses a provided PDF template for consistent label design
-- Fills in label data by overlaying text on the template
-- Customizable label fields including:
-  - Beer Name
-  - Brewery
-  - Style (user-editable field)
-  - ABV (Alcohol by Volume)
-  - IBU (International Bitterness Units)
-  - Packaged Date (user-editable field)
-  - Notes (user-editable field)
-  - Brew Date
-- Generate single labels or batch process multiple labels from JSON
+- Uses a provided PDF template (3 columns x 6 rows = 18 labels per sheet)
+- Fills in the 3 editable fields per label:
+  - **Style** (on page 1)
+  - **Packaged** (on page 1)  
+  - **Notes** (on page 2)
+- Generate single label sheets or batch process multiple sheets from JSON
 - Cross-platform (Windows, macOS, Linux)
 
 ## Requirements
@@ -37,27 +31,26 @@ A simple C# console application for generating printable beer labels by filling 
 
 ## Template
 
-The application uses a PDF template file located in the `templates/` directory. The template (`beer-label-template.pdf`) provides the base design and layout for the beer labels. The application fills in the blank fields with your data.
+The application uses a PDF template file (`templates/beer-label-template.pdf`) with a 3x6 grid layout for 18 labels per page. The template has two pages:
+- **Page 1**: Contains Style and Packaged fields for each label
+- **Page 2**: Contains Notes field for each label
 
 ## Usage
 
 ### Run the Demo
 
-The easiest way to see the application in action is to run the demo, which generates three sample beer labels:
+The easiest way to see the application in action is to run the demo:
 
 ```bash
 cd BeerLabelGenerator
 dotnet run -- demo
 ```
 
-This will create a `demo-output` directory with three sample PDF labels:
-- `Hoppy_IPA.pdf`
-- `Dark_Stout.pdf`
-- `Golden_Lager.pdf`
+This will create a `demo-output` directory with `label-sheet-1.pdf` containing 3 sample labels.
 
-### Generate a Single Label
+### Generate a Single Label Sheet
 
-To generate a custom beer label:
+To generate a label sheet with one label:
 
 ```bash
 dotnet run -- generate <output-path> [beer-name] [brewery] [style] [abv] [ibu] [packaged] [notes]
@@ -65,22 +58,22 @@ dotnet run -- generate <output-path> [beer-name] [brewery] [style] [abv] [ibu] [
 
 **Example:**
 ```bash
-dotnet run -- generate my-beer.pdf "West Coast IPA" "Hop Paradise Brewery" "IPA" "7.2%" "72" "2024-11-08" "An aggressively hopped IPA with tropical fruit flavors"
+dotnet run -- generate my-label.pdf "West Coast IPA" "Hop Paradise Brewery" "IPA" "7.2%" "72" "2024-11-08" "An aggressively hopped IPA with tropical fruit flavors"
 ```
 
 **Parameters:**
 - `output-path`: Path where the PDF will be saved (required)
-- `beer-name`: Name of the beer (optional, default: "Sample Beer")
-- `brewery`: Name of the brewery (optional, default: "Sample Brewery")
-- `style`: Beer style (optional, default: "IPA")
-- `abv`: Alcohol by Volume (optional, default: "6.5%")
-- `ibu`: International Bitterness Units (optional, default: "45")
-- `packaged`: Packaging date (optional, default: current date)
-- `notes`: Beer notes/description (optional, default: "A delicious craft beer")
+- `beer-name`: Name of the beer (optional)
+- `brewery`: Name of the brewery (optional)
+- `style`: Beer style - **fills the Style field** (optional, default: "IPA")
+- `abv`: Alcohol by Volume (optional)
+- `ibu`: International Bitterness Units (optional)
+- `packaged`: Packaging date - **fills the Packaged field** (optional, default: current date)
+- `notes`: Beer notes/description - **fills the Notes field on page 2** (optional)
 
 ### Batch Processing from JSON
 
-You can generate multiple labels at once by providing a JSON file with beer data:
+You can generate multiple label sheets at once by providing a JSON file with beer data. The application will create sheets with up to 18 labels each.
 
 ```bash
 dotnet run -- batch <json-file> <output-directory>
@@ -135,7 +128,7 @@ beer-label-app/
 │   ├── PdfLabelGenerator.cs     # PDF generation logic
 │   └── BeerLabelGenerator.csproj
 ├── templates/                    # PDF template files
-│   └── beer-label-template.pdf  # Base template for labels
+│   └── beer-label-template.pdf  # 3x6 label sheet template (2 pages)
 ├── examples/                     # Example files
 │   ├── sample-beers.json         # Sample JSON with 3 beers
 │   └── README.md                 # Examples documentation
@@ -150,14 +143,15 @@ beer-label-app/
 - **PDF Library**: PDFsharp 6.2.0 (MIT License)
 - **JSON**: System.Text.Json 9.0.10
 
-## User-Editable Fields
+## How It Works
 
-The following fields are designated as user-editable in the template:
-- **Style**: The beer style
-- **Packaged**: The packaging date
-- **Notes**: The beer description and tasting notes
+The application:
+1. Loads the PDF template (`beer-label-template.pdf`)
+2. Calculates positions for each label in the 3x6 grid
+3. Overlays text for the 3 fields (Style, Packaged, Notes) at the appropriate positions
+4. Saves the filled template as a new PDF
 
-These fields can be filled in with your data through the command-line interface or JSON file.
+Each label sheet can contain up to 18 labels. When batch processing, if you have more than 18 labels, multiple sheets will be generated.
 
 ## License
 
@@ -166,17 +160,6 @@ This project is open source and uses the PDFsharp MIT License.
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Examples
-
-### Creating Labels for a Homebrew Batch
-
-```bash
-# Create labels for different beers in your brewing lineup
-dotnet run -- generate american-ipa.pdf "American IPA" "My Home Brewery" "IPA" "6.8%" "65" "2024-11-08" "Classic American IPA with Cascade hops"
-dotnet run -- generate irish-stout.pdf "Irish Dry Stout" "My Home Brewery" "Stout" "4.2%" "35" "2024-11-08" "Smooth and creamy Irish-style stout"
-dotnet run -- generate wheat-beer.pdf "Hefeweizen" "My Home Brewery" "Wheat Beer" "5.4%" "12" "2024-11-08" "Traditional German wheat beer with banana and clove notes"
-```
 
 ## Support
 

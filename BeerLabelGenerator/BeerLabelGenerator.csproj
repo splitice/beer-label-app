@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="../templates/**/*">
+    <None Include="../templates/**/*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>templates/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </None>

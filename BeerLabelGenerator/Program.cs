@@ -166,12 +166,10 @@ static void RunDemo()
         }
     };
 
-    Console.WriteLine("Generating sample labels...");
+    Console.WriteLine("Generating sample label sheet...");
     var generator = new PdfLabelGenerator();
     generator.GenerateLabels(sampleLabels, outputDir);
 
     Console.WriteLine($"\nDemo complete! Check the '{outputDir}' directory for:");
-    Console.WriteLine($"  - Hoppy_IPA.pdf");
-    Console.WriteLine($"  - Dark_Stout.pdf");
-    Console.WriteLine($"  - Golden_Lager.pdf");
+    Console.WriteLine($"  - label-sheet-1.pdf (contains 3 labels in a 3x6 grid)");
 }

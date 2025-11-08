@@ -8,10 +8,25 @@ namespace BeerLabelGenerator;
 
 /// <summary>
 /// Generates printable beer labels by filling in a PDF template
+/// The template is a 3x6 grid (18 labels per page) with fields on page 1 (style, packaged) and page 2 (notes)
 /// </summary>
 public class PdfLabelGenerator
 {
     private const string TEMPLATE_FILENAME = "beer-label-template.pdf";
+    
+    // Template layout: 3 columns x 6 rows = 18 labels per page
+    private const int COLUMNS = 3;
+    private const int ROWS = 6;
+    private const int LABELS_PER_PAGE = COLUMNS * ROWS;
+    
+    // A4 page size: 595.28 x 841.89 points
+    // These values need to be calibrated based on actual template
+    private const double PAGE_WIDTH = 595.28;
+    private const double PAGE_HEIGHT = 841.89;
+    
+    // Calculate label dimensions (approximate, may need adjustment)
+    private readonly double labelWidth = PAGE_WIDTH / COLUMNS;
+    private readonly double labelHeight = PAGE_HEIGHT / ROWS;
 
     static PdfLabelGenerator()
     {
@@ -23,7 +38,7 @@ public class PdfLabelGenerator
     }
 
     /// <summary>
-    /// Generates a beer label PDF by filling in the template with provided data
+    /// Generates a beer label sheet PDF by filling in the template with provided data
     /// </summary>
     /// <param name="labelData">The beer label data</param>
     /// <param name="outputPath">The output path for the generated PDF</param>
@@ -36,6 +51,22 @@ public class PdfLabelGenerator
         if (string.IsNullOrEmpty(outputPath))
             throw new ArgumentException("Output path cannot be null or empty", nameof(outputPath));
 
+        // For single label, generate a sheet with just this one label
+        var labels = new[] { labelData };
+        GenerateSheetInternal(labels, outputPath);
+    }
+
+    /// <summary>
+    /// Generates a label sheet with multiple labels
+    /// </summary>
+    private void GenerateSheetInternal(IEnumerable<LabelData> labels, string outputPath)
+    {
+        if (labels == null)
+            throw new ArgumentNullException(nameof(labels));
+        
+        if (string.IsNullOrEmpty(outputPath))
+            throw new ArgumentException("Output path cannot be null or empty", nameof(outputPath));
+
         // Create output directory if it doesn't exist
         var outputDir = Path.GetDirectoryName(outputPath);
         if (!string.IsNullOrEmpty(outputDir) && !Directory.Exists(outputDir))
@@ -43,7 +74,7 @@ public class PdfLabelGenerator
             Directory.CreateDirectory(outputDir);
         }
 
-        // Get template path - look in templates folder relative to executable
+        // Get template path
         var executableDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? "";
         var templatePath = Path.Combine(executableDir, "templates", TEMPLATE_FILENAME);
 
@@ -55,91 +86,37 @@ public class PdfLabelGenerator
         try
         {
             // Open the template PDF
-            using var document = PdfReader.Open(templatePath, PdfDocumentOpenMode.Import);
+            using var templateDocument = PdfReader.Open(templatePath, PdfDocumentOpenMode.Import);
             
             // Create a new PDF document
             using var outputDocument = new PdfDocument();
             
-            // Copy the first page from the template
-            var page = outputDocument.AddPage(document.Pages[0]);
+            // Copy both pages from the template
+            var page1 = outputDocument.AddPage(templateDocument.Pages[0]);
+            var page2 = templateDocument.Pages.Count > 1 ? outputDocument.AddPage(templateDocument.Pages[1]) : null;
             
-            // Create graphics object to draw on the page
-            using var gfx = XGraphics.FromPdfPage(page);
+            // Create graphics objects for both pages
+            using var gfx1 = XGraphics.FromPdfPage(page1);
+            using var gfx2 = page2 != null ? XGraphics.FromPdfPage(page2) : null;
             
-            // Set up fonts
-            var font = new XFont("Helvetica", 11, XFontStyleEx.Regular);
-            var boldFont = new XFont("Helvetica", 18, XFontStyleEx.Bold);
-            var smallFont = new XFont("Helvetica", 10, XFontStyleEx.Regular);
+            // Set up font (smaller size for label fields)
+            var font = new XFont("Helvetica", 8, XFontStyleEx.Regular);
             
-            // Get page dimensions
-            var pageWidth = page.Width.Point;
-            var pageHeight = page.Height.Point;
-            
-            // Define positions for overlaying text (these are estimates and may need adjustment)
-            // Coordinates in PDF are from bottom-left, but XGraphics uses top-left
-            double leftMargin = 100;
-            double topMargin = 200;
-            
-            // Beer Name
-            if (!string.IsNullOrEmpty(labelData.BeerName))
+            // Fill in labels
+            var labelList = labels.Take(LABELS_PER_PAGE).ToList();
+            for (int i = 0; i < labelList.Count; i++)
             {
-                gfx.DrawString(labelData.BeerName, boldFont, XBrushes.Black, 
-                    new XPoint(leftMargin, topMargin));
-            }
-            
-            // Brewery
-            if (!string.IsNullOrEmpty(labelData.Brewery))
-            {
-                gfx.DrawString(labelData.Brewery, font, XBrushes.Black,
-                    new XPoint(leftMargin, topMargin + 30));
-            }
-            
-            // Style (editable field)
-            if (!string.IsNullOrEmpty(labelData.Style))
-            {
-                gfx.DrawString(labelData.Style, font, XBrushes.Black,
-                    new XPoint(leftMargin + 100, topMargin + 70));
-            }
-            
-            // ABV
-            if (!string.IsNullOrEmpty(labelData.ABV))
-            {
-                gfx.DrawString(labelData.ABV, font, XBrushes.Black,
-                    new XPoint(leftMargin + 100, topMargin + 100));
-            }
-            
-            // IBU
-            if (!string.IsNullOrEmpty(labelData.IBU))
-            {
-                gfx.DrawString(labelData.IBU, font, XBrushes.Black,
-                    new XPoint(leftMargin + 100, topMargin + 130));
-            }
-            
-            // Packaged (editable field)
-            if (!string.IsNullOrEmpty(labelData.Packaged))
-            {
-                gfx.DrawString(labelData.Packaged, font, XBrushes.Black,
-                    new XPoint(leftMargin + 100, topMargin + 160));
-            }
-            
-            // Brew Date
-            if (!string.IsNullOrEmpty(labelData.BrewDate))
-            {
-                gfx.DrawString(labelData.BrewDate, font, XBrushes.Black,
-                    new XPoint(leftMargin + 100, topMargin + 190));
-            }
-            
-            // Notes (editable field - multiline)
-            if (!string.IsNullOrEmpty(labelData.Notes))
-            {
-                DrawMultilineText(gfx, labelData.Notes, smallFont, XBrushes.Black,
-                    new XRect(leftMargin, topMargin + 250, pageWidth - 2 * leftMargin, 80));
+                var label = labelList[i];
+                int row = i / COLUMNS;
+                int col = i % COLUMNS;
+                
+                FillLabelAtPosition(gfx1, gfx2, label, row, col, font);
             }
             
             // Save the output document
             outputDocument.Save(outputPath);
             
-            Console.WriteLine($"Label generated successfully: {outputPath}");
+            Console.WriteLine($"Label sheet generated successfully: {outputPath} ({labelList.Count} label(s) filled)");
         }
         catch (Exception ex)
         {
@@ -149,7 +126,7 @@ public class PdfLabelGenerator
     }
 
     /// <summary>
-    /// Generates multiple labels from a collection of label data
+    /// Generates multiple label sheets from a collection of label data
     /// </summary>
     /// <param name="labels">Collection of label data</param>
     /// <param name="outputDirectory">Directory where labels will be saved</param>
@@ -164,56 +141,80 @@ public class PdfLabelGenerator
             Directory.CreateDirectory(outputDirectory);
         }
 
-        int count = 0;
-        foreach (var label in labels)
+        var labelList = labels.ToList();
+        int sheetNumber = 1;
+        
+        // Process labels in batches of 18 (one sheet at a time)
+        for (int i = 0; i < labelList.Count; i += LABELS_PER_PAGE)
         {
-            count++;
-            var filename = SanitizeFilename(label.BeerName) ?? $"label_{count}";
-            var outputPath = Path.Combine(outputDirectory, $"{filename}.pdf");
-            GenerateLabel(label, outputPath, makeEditable);
+            var batchLabels = labelList.Skip(i).Take(LABELS_PER_PAGE);
+            var outputPath = Path.Combine(outputDirectory, $"label-sheet-{sheetNumber}.pdf");
+            
+            GenerateSheetInternal(batchLabels, outputPath);
+            sheetNumber++;
         }
 
-        Console.WriteLine($"Generated {count} label(s) in {outputDirectory}");
+        Console.WriteLine($"Generated {sheetNumber - 1} label sheet(s) for {labelList.Count} label(s) in {outputDirectory}");
     }
 
-    private void DrawMultilineText(XGraphics gfx, string text, XFont font, XBrush brush, XRect rect)
+    private void FillLabelAtPosition(XGraphics? gfx1, XGraphics? gfx2, LabelData label, int row, int col, XFont font)
     {
-        var words = text.Split(' ');
-        var lines = new List<string>();
-        var currentLine = "";
+        // Calculate the top-left corner of this label position
+        double x = col * labelWidth;
+        double y = row * labelHeight;
         
-        foreach (var word in words)
+        // Field positions within each label (these are estimates and will need calibration)
+        // Based on typical label sheet layouts, fields are usually centered or at specific positions
+        
+        // Style field offset (on page 1)
+        double styleX = x + labelWidth * 0.5;  // Center horizontally
+        double styleY = y + labelHeight * 0.3; // Upper third of label
+        
+        // Packaged field offset (on page 1)
+        double packagedX = x + labelWidth * 0.5;
+        double packagedY = y + labelHeight * 0.5; // Middle of label
+        
+        // Notes field offset (on page 2)
+        double notesX = x + labelWidth * 0.5;
+        double notesY = y + labelHeight * 0.7; // Lower third of label
+        
+        // Fill style on page 1
+        if (gfx1 != null && !string.IsNullOrEmpty(label.Style))
         {
-            var testLine = string.IsNullOrEmpty(currentLine) ? word : $"{currentLine} {word}";
-            var size = gfx.MeasureString(testLine, font);
-            
-            if (size.Width > rect.Width && !string.IsNullOrEmpty(currentLine))
-            {
-                lines.Add(currentLine);
-                currentLine = word;
-            }
-            else
-            {
-                currentLine = testLine;
-            }
+            DrawCenteredText(gfx1, label.Style, font, XBrushes.Black, styleX, styleY, labelWidth * 0.8);
         }
         
-        if (!string.IsNullOrEmpty(currentLine))
+        // Fill packaged on page 1
+        if (gfx1 != null && !string.IsNullOrEmpty(label.Packaged))
         {
-            lines.Add(currentLine);
+            DrawCenteredText(gfx1, label.Packaged, font, XBrushes.Black, packagedX, packagedY, labelWidth * 0.8);
         }
         
-        // Draw each line
-        double y = rect.Y;
-        double lineHeight = font.Height + 2;
-        
-        foreach (var line in lines)
+        // Fill notes on page 2
+        if (gfx2 != null && !string.IsNullOrEmpty(label.Notes))
         {
-            if (y > rect.Y + rect.Height)
-                break; // Stop if we exceed the available height
-                
-            gfx.DrawString(line, font, brush, new XPoint(rect.X, y));
-            y += lineHeight;
+            DrawCenteredText(gfx2, label.Notes, font, XBrushes.Black, notesX, notesY, labelWidth * 0.8);
+        }
+    }
+
+    private void DrawCenteredText(XGraphics gfx, string text, XFont font, XBrush brush, double centerX, double y, double maxWidth)
+    {
+        // Measure text
+        var size = gfx.MeasureString(text, font);
+        
+        // If text is too wide, we might need to wrap or truncate
+        if (size.Width > maxWidth)
+        {
+            // For now, just draw at the position (could implement wrapping here)
+            double x = centerX - maxWidth / 2;
+            gfx.DrawString(text, font, brush, new XRect(x, y, maxWidth, size.Height), 
+                XStringFormats.TopLeft);
+        }
+        else
+        {
+            // Center the text
+            double x = centerX - size.Width / 2;
+            gfx.DrawString(text, font, brush, new XPoint(x, y));
         }
     }
 
