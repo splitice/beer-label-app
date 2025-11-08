@@ -1,11 +1,12 @@
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using TableDescriptor = QuestPDF.Fluent.TableDescriptor;
 
 namespace BeerLabelGenerator;
 
 /// <summary>
-/// Generates printable beer labels from data
+/// Generates printable beer labels with bordered template design
 /// </summary>
 public class PdfLabelGenerator
 {
@@ -16,11 +17,12 @@ public class PdfLabelGenerator
     }
 
     /// <summary>
-    /// Generates a beer label PDF with the provided data
+    /// Generates a beer label PDF with bordered template design
     /// </summary>
     /// <param name="labelData">The beer label data</param>
     /// <param name="outputPath">The output path for the generated PDF</param>
-    public void GenerateLabel(LabelData labelData, string outputPath)
+    /// <param name="makeEditable">If true, highlights Style, Packaged, and Notes fields for easy editing</param>
+    public void GenerateLabel(LabelData labelData, string outputPath, bool makeEditable = false)
     {
         if (labelData == null)
             throw new ArgumentNullException(nameof(labelData));
@@ -41,16 +43,10 @@ public class PdfLabelGenerator
             container.Page(page =>
             {
                 page.Size(PageSizes.A4);
-                page.Margin(50);
+                page.Margin(40);
                 page.DefaultTextStyle(x => x.FontSize(11));
 
-                page.Header().Element(Header);
-                page.Content().Element(c => Content(c, labelData));
-                page.Footer().AlignCenter().Text(x =>
-                {
-                    x.Span("Generated on ");
-                    x.Span(DateTime.Now.ToString("yyyy-MM-dd")).SemiBold();
-                });
+                page.Content().Element(c => CreateBorderedLabel(c, labelData, makeEditable));
             });
         }).GeneratePdf(outputPath);
 
@@ -62,7 +58,8 @@ public class PdfLabelGenerator
     /// </summary>
     /// <param name="labels">Collection of label data</param>
     /// <param name="outputDirectory">Directory where labels will be saved</param>
-    public void GenerateLabels(IEnumerable<LabelData> labels, string outputDirectory)
+    /// <param name="makeEditable">If true, highlights editable fields</param>
+    public void GenerateLabels(IEnumerable<LabelData> labels, string outputDirectory, bool makeEditable = false)
     {
         if (labels == null)
             throw new ArgumentNullException(nameof(labels));
@@ -78,99 +75,111 @@ public class PdfLabelGenerator
             count++;
             var filename = SanitizeFilename(label.BeerName) ?? $"label_{count}";
             var outputPath = Path.Combine(outputDirectory, $"{filename}.pdf");
-            GenerateLabel(label, outputPath);
+            GenerateLabel(label, outputPath, makeEditable);
         }
 
         Console.WriteLine($"Generated {count} label(s) in {outputDirectory}");
     }
 
-    private void Header(IContainer container)
+    private void CreateBorderedLabel(IContainer container, LabelData data, bool makeEditable)
     {
-        container.Row(row =>
+        container.Column(column =>
         {
-            row.RelativeItem().Column(column =>
+            column.Spacing(10);
+
+            // Header - Beer Name
+            column.Item().AlignCenter().Text(data.BeerName)
+                .FontSize(24).Bold().FontColor(Colors.Blue.Darken3);
+
+            // Brewery Name
+            if (!string.IsNullOrEmpty(data.Brewery))
             {
-                column.Item().AlignCenter().Text("BEER LABEL")
-                    .FontSize(24).Bold().FontColor(Colors.Blue.Darken3);
-                
-                column.Item().PaddingTop(5).AlignCenter().Text("Craft Beverage Information")
-                    .FontSize(12).Italic().FontColor(Colors.Grey.Darken1);
+                column.Item().AlignCenter().Text(data.Brewery)
+                    .FontSize(14).FontColor(Colors.Grey.Darken1);
+            }
+
+            column.Item().PaddingVertical(10);
+
+            // Main content table with borders
+            column.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.ConstantColumn(150); // Label column
+                    columns.RelativeColumn(); // Value column
+                });
+
+                // Style field - editable
+                AddTableRow(table, "Style:", data.Style, makeEditable, true);
+
+                // ABV
+                AddTableRow(table, "ABV:", data.ABV, false, false);
+
+                // IBU
+                AddTableRow(table, "IBU:", data.IBU, false, false);
+
+                // Packaged field - editable
+                AddTableRow(table, "Packaged:", data.Packaged, makeEditable, true);
+
+                // Brew Date
+                AddTableRow(table, "Brew Date:", data.BrewDate, false, false);
             });
+
+            column.Item().PaddingTop(15);
+
+            // Notes section - editable
+            column.Item().Column(notesColumn =>
+            {
+                notesColumn.Item().Text("Notes:")
+                    .FontSize(12).Bold();
+
+                notesColumn.Item().PaddingTop(5).Border(1).BorderColor(Colors.Grey.Medium)
+                    .Padding(10)
+                    .Background(makeEditable ? Colors.Yellow.Lighten4 : Colors.Grey.Lighten4)
+                    .MinHeight(100)
+                    .Text(data.Notes)
+                    .FontSize(10)
+                    .FontColor(makeEditable ? Colors.Blue.Darken2 : Colors.Black);
+            });
+
+            // Footer note if editable
+            if (makeEditable)
+            {
+                column.Item().PaddingTop(20).AlignCenter()
+                    .Text("Highlighted fields (Style, Packaged, Notes) can be edited in a PDF editor")
+                    .FontSize(8).Italic().FontColor(Colors.Grey.Darken1);
+            }
         });
     }
 
-    private void Content(IContainer container, LabelData data)
+    private void AddTableRow(TableDescriptor table, string label, string value, bool makeEditable, bool isEditableField)
     {
-        container.PaddingVertical(20).Column(column =>
-        {
-            column.Spacing(15);
-
-            // Beer Name - Prominently displayed
-            column.Item().BorderBottom(2).BorderColor(Colors.Blue.Darken3)
-                .PaddingBottom(10).Text(data.BeerName)
-                .FontSize(20).Bold().FontColor(Colors.Blue.Darken3);
-
-            // Brewery
-            if (!string.IsNullOrEmpty(data.Brewery))
+        // Label cell
+        table.Cell().Border(1).BorderColor(Colors.Black)
+            .Background(Colors.Grey.Lighten3)
+            .Padding(8)
+            .AlignMiddle()
+            .Text(text =>
             {
-                column.Item().Row(row =>
-                {
-                    row.ConstantItem(120).Text("Brewery:").Bold();
-                    row.RelativeItem().Text(data.Brewery);
-                });
-            }
+                text.Span(label).Bold().FontSize(11);
+            });
 
-            // Style
-            if (!string.IsNullOrEmpty(data.Style))
+        // Value cell - Highlight editable fields
+        table.Cell().Border(1).BorderColor(Colors.Black)
+            .Padding(8)
+            .Background(makeEditable && isEditableField ? Colors.Yellow.Lighten4 : Colors.White)
+            .AlignMiddle()
+            .Text(text =>
             {
-                column.Item().Row(row =>
+                if (makeEditable && isEditableField)
                 {
-                    row.ConstantItem(120).Text("Style:").Bold();
-                    row.RelativeItem().Text(data.Style);
-                });
-            }
-
-            // ABV
-            if (!string.IsNullOrEmpty(data.ABV))
-            {
-                column.Item().Row(row =>
+                    text.Span(value).FontSize(11).FontColor(Colors.Blue.Darken2);
+                }
+                else
                 {
-                    row.ConstantItem(120).Text("ABV:").Bold();
-                    row.RelativeItem().Text(data.ABV);
-                });
-            }
-
-            // IBU
-            if (!string.IsNullOrEmpty(data.IBU))
-            {
-                column.Item().Row(row =>
-                {
-                    row.ConstantItem(120).Text("IBU:").Bold();
-                    row.RelativeItem().Text(data.IBU);
-                });
-            }
-
-            // Brew Date
-            if (!string.IsNullOrEmpty(data.BrewDate))
-            {
-                column.Item().Row(row =>
-                {
-                    row.ConstantItem(120).Text("Brew Date:").Bold();
-                    row.RelativeItem().Text(data.BrewDate);
-                });
-            }
-
-            // Description
-            if (!string.IsNullOrEmpty(data.Description))
-            {
-                column.Item().PaddingTop(10).Column(descColumn =>
-                {
-                    descColumn.Item().Text("Description:").Bold().FontSize(12);
-                    descColumn.Item().PaddingTop(5).Background(Colors.Grey.Lighten4)
-                        .Padding(10).Text(data.Description).FontSize(10);
-                });
-            }
-        });
+                    text.Span(value).FontSize(11);
+                }
+            });
     }
 
     private static string? SanitizeFilename(string filename)

@@ -43,18 +43,20 @@ catch (Exception ex)
 static void ShowUsage()
 {
     Console.WriteLine("Usage:");
-    Console.WriteLine("  BeerLabelGenerator generate <output-path> [beer-name] [brewery] [style] [abv] [ibu] [description]");
+    Console.WriteLine("  BeerLabelGenerator generate <output-path> [options]");
     Console.WriteLine("    Generates a label with provided data");
+    Console.WriteLine("    Options: [beer-name] [brewery] [style] [abv] [ibu] [packaged] [notes]");
+    Console.WriteLine("    Add --editable flag to make Style, Packaged, and Notes fields editable");
     Console.WriteLine();
-    Console.WriteLine("  BeerLabelGenerator batch <json-file> <output-directory>");
+    Console.WriteLine("  BeerLabelGenerator batch <json-file> <output-directory> [--editable]");
     Console.WriteLine("    Generates labels from a JSON file containing multiple beer entries");
     Console.WriteLine();
-    Console.WriteLine("  BeerLabelGenerator demo");
+    Console.WriteLine("  BeerLabelGenerator demo [--editable]");
     Console.WriteLine("    Runs a demo that creates sample labels");
     Console.WriteLine();
     Console.WriteLine("Examples:");
-    Console.WriteLine("  BeerLabelGenerator generate output.pdf \"IPA\" \"My Brewery\"");
-    Console.WriteLine("  BeerLabelGenerator batch beers.json output/");
+    Console.WriteLine("  BeerLabelGenerator generate output.pdf \"IPA\" \"My Brewery\" --editable");
+    Console.WriteLine("  BeerLabelGenerator batch beers.json output/ --editable");
     Console.WriteLine("  BeerLabelGenerator demo");
 }
 
@@ -63,25 +65,27 @@ static void GenerateSingleLabel(string[] args)
     if (args.Length < 2)
     {
         Console.WriteLine("Error: Output path required");
-        Console.WriteLine("Usage: BeerLabelGenerator generate <output-path> [beer-name] [brewery] [style] [abv] [ibu] [description]");
+        Console.WriteLine("Usage: BeerLabelGenerator generate <output-path> [beer-name] [brewery] [style] [abv] [ibu] [packaged] [notes]");
         return;
     }
 
     var outputPath = args[1];
+    var makeEditable = args.Contains("--editable");
 
     var labelData = new LabelData
     {
-        BeerName = args.Length > 2 ? args[2] : "Sample Beer",
-        Brewery = args.Length > 3 ? args[3] : "Sample Brewery",
-        Style = args.Length > 4 ? args[4] : "IPA",
-        ABV = args.Length > 5 ? args[5] : "6.5%",
-        IBU = args.Length > 6 ? args[6] : "45",
-        Description = args.Length > 7 ? args[7] : "A delicious craft beer",
+        BeerName = args.Length > 2 && args[2] != "--editable" ? args[2] : "Sample Beer",
+        Brewery = args.Length > 3 && args[3] != "--editable" ? args[3] : "Sample Brewery",
+        Style = args.Length > 4 && args[4] != "--editable" ? args[4] : "IPA",
+        ABV = args.Length > 5 && args[5] != "--editable" ? args[5] : "6.5%",
+        IBU = args.Length > 6 && args[6] != "--editable" ? args[6] : "45",
+        Packaged = args.Length > 7 && args[7] != "--editable" ? args[7] : DateTime.Now.ToString("yyyy-MM-dd"),
+        Notes = args.Length > 8 && args[8] != "--editable" ? args[8] : "A delicious craft beer",
         BrewDate = DateTime.Now.ToString("yyyy-MM-dd")
     };
 
     var generator = new PdfLabelGenerator();
-    generator.GenerateLabel(labelData, outputPath);
+    generator.GenerateLabel(labelData, outputPath, makeEditable);
 }
 
 static void GenerateBatchFromJson(string[] args)
@@ -89,12 +93,13 @@ static void GenerateBatchFromJson(string[] args)
     if (args.Length < 3)
     {
         Console.WriteLine("Error: JSON file path and output directory required");
-        Console.WriteLine("Usage: BeerLabelGenerator batch <json-file> <output-directory>");
+        Console.WriteLine("Usage: BeerLabelGenerator batch <json-file> <output-directory> [--editable]");
         return;
     }
 
     var jsonPath = args[1];
     var outputDir = args[2];
+    var makeEditable = args.Contains("--editable");
 
     if (!File.Exists(jsonPath))
     {
@@ -113,7 +118,7 @@ static void GenerateBatchFromJson(string[] args)
 
     Console.WriteLine($"Found {labels.Length} beer(s) in JSON file");
     var generator = new PdfLabelGenerator();
-    generator.GenerateLabels(labels, outputDir);
+    generator.GenerateLabels(labels, outputDir, makeEditable);
 }
 
 static void RunDemo()
@@ -136,7 +141,8 @@ static void RunDemo()
             Style = "India Pale Ale",
             ABV = "6.8%",
             IBU = "65",
-            Description = "A bold and hoppy IPA with citrus and pine notes. Dry-hopped with Cascade and Centennial hops for maximum hop flavor and aroma.",
+            Packaged = "2024-10-20",
+            Notes = "A bold and hoppy IPA with citrus and pine notes. Dry-hopped with Cascade and Centennial hops for maximum hop flavor and aroma.",
             BrewDate = "2024-10-15"
         },
         new LabelData
@@ -146,7 +152,8 @@ static void RunDemo()
             Style = "Imperial Stout",
             ABV = "9.2%",
             IBU = "40",
-            Description = "Rich and roasty with notes of chocolate, coffee, and dark fruit. Aged in bourbon barrels for 6 months.",
+            Packaged = "2024-09-15",
+            Notes = "Rich and roasty with notes of chocolate, coffee, and dark fruit. Aged in bourbon barrels for 6 months.",
             BrewDate = "2024-09-01"
         },
         new LabelData
@@ -156,14 +163,15 @@ static void RunDemo()
             Style = "German Pilsner",
             ABV = "4.8%",
             IBU = "32",
-            Description = "Crisp and refreshing lager with a clean finish. Brewed with noble hops and German pilsner malt.",
+            Packaged = "2024-11-05",
+            Notes = "Crisp and refreshing lager with a clean finish. Brewed with noble hops and German pilsner malt.",
             BrewDate = "2024-11-01"
         }
     };
 
     Console.WriteLine("Generating sample labels...");
     var generator = new PdfLabelGenerator();
-    generator.GenerateLabels(sampleLabels, outputDir);
+    generator.GenerateLabels(sampleLabels, outputDir, false);
 
     Console.WriteLine($"\nDemo complete! Check the '{outputDir}' directory for:");
     Console.WriteLine($"  - Hoppy_IPA.pdf");

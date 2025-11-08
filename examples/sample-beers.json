@@ -5,7 +5,8 @@
     "Style": "New England IPA",
     "ABV": "6.5%",
     "IBU": "50",
-    "Description": "A hazy, juicy IPA bursting with tropical fruit flavors from Mosaic and Citra hops. Notes of mango, pineapple, and passion fruit.",
+    "Packaged": "2024-11-05",
+    "Notes": "A hazy, juicy IPA bursting with tropical fruit flavors from Mosaic and Citra hops. Notes of mango, pineapple, and passion fruit.",
     "BrewDate": "2024-11-01"
   },
   {
@@ -14,7 +15,8 @@
     "Style": "Robust Porter",
     "ABV": "5.8%",
     "IBU": "35",
-    "Description": "A rich, dark porter with flavors of chocolate, coffee, and caramel. Smooth and balanced with a subtle hop bitterness.",
+    "Packaged": "2024-10-25",
+    "Notes": "A rich, dark porter with flavors of chocolate, coffee, and caramel. Smooth and balanced with a subtle hop bitterness.",
     "BrewDate": "2024-10-20"
   },
   {
@@ -23,7 +25,8 @@
     "Style": "American Wheat Ale",
     "ABV": "4.9%",
     "IBU": "18",
-    "Description": "A light and refreshing wheat beer perfect for warm weather. Brewed with orange peel and coriander for a citrusy finish.",
+    "Packaged": "2024-11-08",
+    "Notes": "A light and refreshing wheat beer perfect for warm weather. Brewed with orange peel and coriander for a citrusy finish.",
     "BrewDate": "2024-11-05"
   }
 ]

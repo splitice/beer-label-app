@@ -10,6 +10,7 @@ public class LabelData
     public string Style { get; set; } = string.Empty;
     public string ABV { get; set; } = string.Empty;
     public string IBU { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
+    public string Packaged { get; set; } = string.Empty;
+    public string Notes { get; set; } = string.Empty;
     public string BrewDate { get; set; } = string.Empty;
 }
