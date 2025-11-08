@@ -1,0 +1,34 @@
+# Build artifacts
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# Demo output
+demo-output/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet packages
+*.nupkg
+packages/
+
+# Visual Studio
+.vs/
+*.vsidx
+*.v2
+
+# Rider
+.idea/
+
+# macOS
+.DS_Store
+
+# Test results
+TestResults/
+*.trx
