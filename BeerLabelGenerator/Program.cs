@@ -1,4 +1,5 @@
 ﻿using BeerLabelGenerator;
+using System.Text.Json;
 
 Console.WriteLine("=== Beer Label Generator ===\n");
 
@@ -17,6 +18,10 @@ try
     {
         case "generate":
             GenerateSingleLabel(args);
+            break;
+
+        case "batch":
+            GenerateBatchFromJson(args);
             break;
 
         case "demo":
@@ -41,11 +46,15 @@ static void ShowUsage()
     Console.WriteLine("  BeerLabelGenerator generate <output-path> [beer-name] [brewery] [style] [abv] [ibu] [description]");
     Console.WriteLine("    Generates a label with provided data");
     Console.WriteLine();
+    Console.WriteLine("  BeerLabelGenerator batch <json-file> <output-directory>");
+    Console.WriteLine("    Generates labels from a JSON file containing multiple beer entries");
+    Console.WriteLine();
     Console.WriteLine("  BeerLabelGenerator demo");
     Console.WriteLine("    Runs a demo that creates sample labels");
     Console.WriteLine();
     Console.WriteLine("Examples:");
     Console.WriteLine("  BeerLabelGenerator generate output.pdf \"IPA\" \"My Brewery\"");
+    Console.WriteLine("  BeerLabelGenerator batch beers.json output/");
     Console.WriteLine("  BeerLabelGenerator demo");
 }
 
@@ -73,6 +82,38 @@ static void GenerateSingleLabel(string[] args)
 
     var generator = new PdfLabelGenerator();
     generator.GenerateLabel(labelData, outputPath);
+}
+
+static void GenerateBatchFromJson(string[] args)
+{
+    if (args.Length < 3)
+    {
+        Console.WriteLine("Error: JSON file path and output directory required");
+        Console.WriteLine("Usage: BeerLabelGenerator batch <json-file> <output-directory>");
+        return;
+    }
+
+    var jsonPath = args[1];
+    var outputDir = args[2];
+
+    if (!File.Exists(jsonPath))
+    {
+        Console.WriteLine($"Error: JSON file not found: {jsonPath}");
+        return;
+    }
+
+    var jsonContent = File.ReadAllText(jsonPath);
+    var labels = JsonSerializer.Deserialize<LabelData[]>(jsonContent);
+
+    if (labels == null || labels.Length == 0)
+    {
+        Console.WriteLine("Error: No labels found in JSON file");
+        return;
+    }
+
+    Console.WriteLine($"Found {labels.Length} beer(s) in JSON file");
+    var generator = new PdfLabelGenerator();
+    generator.GenerateLabels(labels, outputDir);
 }
 
 static void RunDemo()

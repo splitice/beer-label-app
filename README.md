@@ -72,6 +72,36 @@ dotnet run -- generate my-beer.pdf "West Coast IPA" "Hop Paradise Brewery" "IPA"
 - `ibu`: International Bitterness Units (optional, default: "45")
 - `description`: Beer description (optional, default: "A delicious craft beer")
 
+### Batch Processing from JSON
+
+You can generate multiple labels at once by providing a JSON file with beer data:
+
+```bash
+dotnet run -- batch <json-file> <output-directory>
+```
+
+**Example:**
+```bash
+dotnet run -- batch ../examples/sample-beers.json batch-output/
+```
+
+**JSON Format:**
+```json
+[
+  {
+    "BeerName": "Tropical Thunder IPA",
+    "Brewery": "Island Brewing Company",
+    "Style": "New England IPA",
+    "ABV": "6.5%",
+    "IBU": "50",
+    "Description": "A hazy, juicy IPA bursting with tropical fruit flavors...",
+    "BrewDate": "2024-11-01"
+  }
+]
+```
+
+See `examples/sample-beers.json` for a complete example.
+
 ### Building a Standalone Executable
 
 To create a standalone executable:

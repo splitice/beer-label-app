@@ -1,0 +1,29 @@
+[
+  {
+    "BeerName": "Tropical Thunder IPA",
+    "Brewery": "Island Brewing Company",
+    "Style": "New England IPA",
+    "ABV": "6.5%",
+    "IBU": "50",
+    "Description": "A hazy, juicy IPA bursting with tropical fruit flavors from Mosaic and Citra hops. Notes of mango, pineapple, and passion fruit.",
+    "BrewDate": "2024-11-01"
+  },
+  {
+    "BeerName": "Midnight Porter",
+    "Brewery": "Dark Horse Brewing",
+    "Style": "Robust Porter",
+    "ABV": "5.8%",
+    "IBU": "35",
+    "Description": "A rich, dark porter with flavors of chocolate, coffee, and caramel. Smooth and balanced with a subtle hop bitterness.",
+    "BrewDate": "2024-10-20"
+  },
+  {
+    "BeerName": "Summer Wheat",
+    "Brewery": "Sunshine Ales",
+    "Style": "American Wheat Ale",
+    "ABV": "4.9%",
+    "IBU": "18",
+    "Description": "A light and refreshing wheat beer perfect for warm weather. Brewed with orange peel and coriander for a citrusy finish.",
+    "BrewDate": "2024-11-05"
+  }
+]

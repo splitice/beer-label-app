@@ -7,6 +7,7 @@ obj/
 
 # Demo output and generated PDFs
 demo-output/
+batch-output/
 *.pdf
 
 # User-specific files
