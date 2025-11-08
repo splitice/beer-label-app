@@ -5,8 +5,9 @@ obj/
 *.exe
 *.pdb
 
-# Demo output
+# Demo output and generated PDFs
 demo-output/
+*.pdf
 
 # User-specific files
 *.user
